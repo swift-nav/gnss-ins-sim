@@ -34,7 +34,7 @@ hori_errors = []
 vert_errors = []
 atrack_errors = []
 ctrack_errors = []
-hori_errors_10s = []
+hori_errors_end = []
 for f in glob.glob("{}/dr_*.csv".format(resultsdir)):
     df = pd.read_csv(f) 
     t = df[COL_TIME].values    
@@ -52,13 +52,19 @@ for f in glob.glob("{}/dr_*.csv".format(resultsdir)):
     ref_x = EARTHRAD * D2R * ref_lon * np.cos(D2R * 32.)
     vert_errors.append(np.abs(ref_alt - dut_alt))
     hori = np.linalg.norm([ref_x - dut_x, ref_y - dut_y], axis=0)
-    hori_errors_10s.append(hori[-1])
+    hori_errors_end.append(hori[-1])
     hori_errors.append(hori)
     atrack_errors.append((ref_y - dut_y)[-1])
     ctrack_errors.append((ref_x - dut_x)[-1])
 
+hori_errors_end = np.sort(hori_errors_end)
 
-print("Mean error at 10 seconds",  np.mean(hori_errors_10s))
+i = int(np.floor(0.99*len(hori_errors)))
+
+print "Mean 2D error: %.3f m" % np.mean(hori_errors_end)
+print "99%% 2D error: %.3f m" % hori_errors_end[i]
+
+
 fig = plt.figure(figsize=(12,6))
 plt.subplot(221)
 plt.scatter(np.ravel(times)[::10], np.ravel(hori_errors)[::10], color=(0., 0., 1., 0.05))

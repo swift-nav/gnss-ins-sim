@@ -17,6 +17,7 @@ import tempfile
 import contextlib
 import numpy as np
 import pandas as pd
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
@@ -36,9 +37,21 @@ G = 9.80665 # m/s^2
 UG = G / 1.0e6 # m/s^2
 H2S = 3600 # hours to seconds
 
+
+VIBRATION_MODELS = {
+
+'none': None,
+
 # Vibrations experienced during 55mph highway 101 driving
 #DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random'
-DEFAULT_VIBRATIONS = '[0.0215 0.0215 0.075]g-random'
+'smooth-road': '[0.0215 0.0215 0.075]g-random',
+
+# Vibrations experienced during 33mph bayfarm driving
+#ROUGH_VIBRATIONS = '[0.0430 0.0430 0.1143]g-random'
+'bumpy-road': '[0.0342 0.0342 0.1002]g-random'
+
+}
+
 
 '''
     'gyro_b': gyro bias, deg/hr
@@ -169,7 +182,7 @@ def perturbed_initial_condition(ini_pos_vel_att):
     ini_pos_vel_att[6:9] += ini_att_err
     return ini_pos_vel_att
 
-def run_and_save_results(args, motion_def):
+def run_and_save_results(args, motion_def, verbose=True):
     resultsdir = args.outdir
     stagingdir = os.path.join(resultsdir, "staging")
     # Before running, warn if the resultsdir holds existing results.
@@ -178,16 +191,28 @@ def run_and_save_results(args, motion_def):
         print("         You may end up with a mismatched set.")
     # Setup and run N simulations.
     imu = imu_model.IMU(accuracy=IMU_MODELS[args.imu], axis=6, gps=False)
+    if verbose:
+        print "\tUsing IMU model: %s" % args.imu
     ini_pos_vel_att = read_initial_condition(motion_def)
+    if args.vibrations:
+        env=VIBRATION_MODELS[args.vibrations]
+        if verbose:
+            print "\tUsing vibration model: %s" % args.vibrations
+    else:
+        env=None
+        if verbose:
+            print "\tUsing vibration model: none"  
+    if args.odom_sigma is not None:
+        if args.odom_sigma == 0.:
+            args.odom_sigma = None
+        if verbose:
+            print "\tUsing odometry sigma: %s" % args.odom_sigma
     for i in range(args.N):
         if args.enable_init_error:
             init_cond = perturbed_initial_condition(ini_pos_vel_att)  
         else:
             init_cond = ini_pos_vel_att
-        if args.enable_vibrations:
-            env=DEFAULT_VIBRATIONS
-        else:
-            env=None
+
         algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=args.odom_sigma)
         sim = ins_sim.Sim([args.fs, 0.0, 0.0],
                            motion_def,
@@ -204,6 +229,11 @@ def run_and_save_results(args, motion_def):
             sim.results(stagingdir, end_point=True)
             sys.stdout = stdout
         collate_sim_results(stagingdir, os.path.join(resultsdir, "dr_{}.csv".format(i)))
+        if verbose:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+    if verbose:
+        print "Done"
     shutil.rmtree(stagingdir)
 
 def collate_sim_results(simresultsdir, outfile):
@@ -232,8 +262,10 @@ if __name__ == "__main__":
                         help='IMU sensor noise parameters to use.')
     parser.add_argument('--fs', type=float, default=100.,
                         help='IMU sample rate.')
-    parser.add_argument('--enable-vibrations', action='store_true', default=False,
-                        help='Enable simulated vibrations.')
+    parser.add_argument('--vibrations', choices=VIBRATION_MODELS.keys(), required=False,
+                        help='Simulated vibration parameters')
+    # parser.add_argument('--enable-vibrations', action='store_true', default=False,
+    #                     help='Enable simulated vibrations.')
     parser.add_argument('--enable-init-error', action='store_true', default=False,
                         help='Enable small errors in the initial state estimate.')
     parser.add_argument('--odom-sigma', type=float, required=False,
