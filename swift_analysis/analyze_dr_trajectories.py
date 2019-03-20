@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os.path
+import os
 
 resultsdir = sys.argv[1]
 
@@ -57,32 +58,62 @@ for f in glob.glob("{}/dr_*.csv".format(resultsdir)):
     atrack_errors.append((ref_y - dut_y)[-1])
     ctrack_errors.append((ref_x - dut_x)[-1])
 
-hori_errors_end = np.sort(hori_errors_end)
-
-i = int(np.floor(0.99*len(hori_errors)))
-
-print "Mean 2D error: %.3f m" % np.mean(hori_errors_end)
-print "99%% 2D error: %.3f m" % hori_errors_end[i]
 
 
 fig = plt.figure(figsize=(12,6))
 plt.subplot(221)
-plt.scatter(np.ravel(times)[::10], np.ravel(hori_errors)[::10], color=(0., 0., 1., 0.05))
+plt.scatter(np.ravel(times)[::1], np.ravel(hori_errors)[::1], color=(0., 0., 1., 0.05), marker='x', s=1)
 plt.title("Horizontal Error Magnitude")
 plt.xlabel("t (s)")
 plt.ylabel("error (m)")
 plt.subplot(223)
-plt.scatter(np.ravel(times)[::10], np.ravel(vert_errors)[::10], color=(0., 0., 1., 0.05))
+plt.scatter(np.ravel(times)[::10], np.ravel(vert_errors)[::10], color=(0., 0., 1., 0.05), marker='x', s=1)
 plt.title("Vertical Error Magnitude")
 plt.xlabel("t (s)")
 plt.ylabel("error (m)")
 plt.subplot(122)
-plt.scatter(np.ravel(ctrack_errors), np.ravel(atrack_errors), color=(0., 0., 1., 1.0))
+plt.scatter(np.ravel(ctrack_errors), np.ravel(atrack_errors), color=(0., 0., 1., 0.7), marker='o', s=6)
 plt.title("Error Scatter")
 plt.xlabel("Horizontal Cross-Track Error (m)")
 plt.ylabel("Horizontal Along-Track Error (m)")
 plt.gca().set_aspect('equal', 'datalim')
 
-fig.savefig(os.path.join(resultsdir, "analytics.png"))
-plt.show()
+resultsname = resultsdir.strip("/")
+
+hori_errors_end = np.sort(hori_errors_end)
+ind99 = int(np.floor(0.99*len(hori_errors_end)))
+stats = {
+    'mean': np.mean(hori_errors_end),
+    'ind99': ind99,
+    '99%': hori_errors_end[ind99]
+}
+print "Mean 2D error: %.3f m" % stats['mean']
+print "99%% 2D error: %.3f m (i=%d/%d)" % (stats['99%'], stats['ind99'], len(hori_errors_end))
+fig.savefig(resultsname + "-analytics.png")
+
+
+resultsparams = resultsname.split("-")
+if len(resultsparams) >= 5:
+    # This came from parallel sims, so we dump results into CSV file
+    STATSFILE = "results.csv"
+    write_header = False
+    if not os.path.isfile(STATSFILE):
+        write_header = True
+
+    with open(STATSFILE, 'a+') as f:
+        if write_header:
+            f.write("IMU,Speed(mph),Vibration,Odometry,Mean Error,99%% Error\n")
+        f.write("%s,%s,%s,%s,%f,%f\n" % (
+            resultsparams[1],
+            resultsparams[2],
+            resultsparams[3],
+            resultsparams[4],
+            stats['mean'],
+            stats['99%']))
+
+    plt.show(block=False)
+else:
+    plt.show()
+
+
 

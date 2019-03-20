@@ -44,14 +44,21 @@ VIBRATION_MODELS = {
 
 # Vibrations experienced during 55mph highway 101 driving
 #DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random'
-'smooth-road': '[0.0215 0.0215 0.075]g-random',
+'smooth': '[0.0215 0.0215 0.075]g-random',
 
 # Vibrations experienced during 33mph bayfarm driving
 #ROUGH_VIBRATIONS = '[0.0430 0.0430 0.1143]g-random'
-'bumpy-road': '[0.0342 0.0342 0.1002]g-random'
+'bumpy': '[0.0342 0.0342 0.1002]g-random'
 
 }
 
+ODOMETRY_MODELS = {
+
+'none': None,
+
+'perfect': 0.001
+
+}
 
 '''
     'gyro_b': gyro bias, deg/hr
@@ -202,18 +209,18 @@ def run_and_save_results(args, motion_def, verbose=True):
         env=None
         if verbose:
             print "\tUsing vibration model: none"  
-    if args.odom_sigma is not None:
-        if args.odom_sigma == 0.:
-            args.odom_sigma = None
+    odom_sigma = None
+    if args.odometry:
+        odom_sigma=ODOMETRY_MODELS[args.odometry]
         if verbose:
-            print "\tUsing odometry sigma: %s" % args.odom_sigma
+            print "\tUsing odometry sigma: %s" % odom_sigma
     for i in range(args.N):
         if args.enable_init_error:
             init_cond = perturbed_initial_condition(ini_pos_vel_att)  
         else:
             init_cond = ini_pos_vel_att
 
-        algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=args.odom_sigma)
+        algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=odom_sigma)
         sim = ins_sim.Sim([args.fs, 0.0, 0.0],
                            motion_def,
                            ref_frame=0,
@@ -264,12 +271,10 @@ if __name__ == "__main__":
                         help='IMU sample rate.')
     parser.add_argument('--vibrations', choices=VIBRATION_MODELS.keys(), required=False,
                         help='Simulated vibration parameters')
-    # parser.add_argument('--enable-vibrations', action='store_true', default=False,
-    #                     help='Enable simulated vibrations.')
+    parser.add_argument('--odometry', choices=ODOMETRY_MODELS.keys(), required=False,
+                        help='Simulated odometry quality')
     parser.add_argument('--enable-init-error', action='store_true', default=False,
                         help='Enable small errors in the initial state estimate.')
-    parser.add_argument('--odom-sigma', type=float, required=False,
-                        help='(Optional) Standard deviation of wheel-odom velocity measurements.')
     args = parser.parse_args()
     # Generate and run motion defs.
     motion_def = make_motion_def(args)
