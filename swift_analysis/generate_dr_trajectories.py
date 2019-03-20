@@ -115,6 +115,15 @@ IMU_MODELS = {
              'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
              'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
+'gyroonly': {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.3160,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 *H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.0,
+             'accel_b_stability': np.array([1., 1., 1.]) * 0.0 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 10000.0 * H2S},
+
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
            'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
