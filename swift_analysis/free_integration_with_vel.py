@@ -33,7 +33,7 @@ class FreeIntegrationWithVel(object):
             earth_rot: Consider the Earth rotation or not. Only used when ref_frame=0.
         '''
         # algorithm description
-        self.input = ['ref_frame', 'fs', 'gyro', 'accel', 'ref_vel']
+        self.input = ['ref_frame', 'fs', 'gyro', 'accel', 'ref_vel', 'ref_att_euler']
         self.output = ['att_euler', 'pos', 'vel']
         self.earth_rot = earth_rot
         self.meas_vel_stddev = meas_vel_stddev 
@@ -67,6 +67,7 @@ class FreeIntegrationWithVel(object):
         gyro = set_of_input[2]
         accel = set_of_input[3]
         ref_vel_n = set_of_input[4]
+        ref_att_euler = set_of_input[5]
         n = accel.shape[0]
         # Free IMU integration
         self.att = np.zeros((n, 3))
@@ -151,10 +152,20 @@ class FreeIntegrationWithVel(object):
 
                 #### NOTE: SWIFT MODIFICATION
                 if self.meas_vel_stddev is not None:
-                    vel_noise = np.random.normal(scale=self.meas_vel_stddev)
-                    vel_mag = np.linalg.norm(ref_vel_n[i-1, :])
-                    vel_dir_n = self.vel[i-1, :] / np.linalg.norm(self.vel[i-1, :])
-                    self.vel[i-1, :] = (vel_mag + vel_noise) * vel_dir_n
+                    # Get the true attitude matrix.
+                    ref_c_bn = attitude.euler2dcm(ref_att_euler[i-1, :])
+                    # Get the estimated attitude matrix.
+                    hat_c_bn = attitude.euler2dcm(self.att[i-1,:])
+                    # Get the true body-frame velocity vector.
+                    ref_vel_b = ref_c_bn.dot(ref_vel_n[i-1,:])
+                    # Assume X points forward, apply non-holonomic constraints.
+                    hat_vel_b[1] = 0.
+                    hat_vel_b[2] = 0.
+                    # Add noise.
+                    hat_vel_b[0] += np.linalg.normal(scale=self.meas_vel_stddev)
+                    # Rotate back into nav frame.
+                    hat_vel_n = hat_c_bn.T.dot(hat_vel_b)
+                    self.vel[i-1, :] = hat_vel_n
                 #### propagate position
                 lat_dot = self.vel[i-1, 0] / rm_effective
                 lon_dot = self.vel[i-1, 1] / rn_effective / cl
