@@ -18,6 +18,7 @@ import contextlib
 import numpy as np
 import pandas as pd
 import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
@@ -196,12 +197,19 @@ def make_motion_def(args,traj):
     speed_ms = args.speed * MPH2MS
     init_values = [32., 120., 0., speed_ms, 0., 0., 0., 0., 0.]
     if traj == 'CVSL':
+        print "Creating Straight Line Trajectory"
+        print "\tVelocity: %.2fm/s for %.2fs" % (speed_ms, args.dur)
         traj_values = [1, 0., 0., 0., 0., 0., 0., args.dur, 0]
     if traj == 'CVArc':
-        # Constant velocity in a 90 degree over 246 meters (90 degree turn at 55mph, ~0.4g turn)
-        yaw_rate = speed_ms * 90./245.
+        # Constant velocity in a 90 degree over 500 meters (90 degree turn at 112mph, ~0.4g turn)
+        yaw_rate = speed_ms * 90./500.
+        turn_radius = ((speed_ms * args.dur)/(yaw_rate*args.dur*D2R))
+        lateral_g = ((speed_ms**2)/turn_radius)/G
         print "Creating Arc Trajectory"
         print "\tYaw rate: %.4f deg/sec over %.2fs at %.2fm/s" % (yaw_rate, args.dur, speed_ms)
+        print "\tTurn angle: %.2fdeg" % (yaw_rate*args.dur)
+        print "\tTurn Radius: %.2fm" % (turn_radius)
+        print "\tLateral Gs: %.2fg" % (lateral_g)
         traj_values = [1, yaw_rate, 0., 0., 0., 0., 0., args.dur, 0]
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(init_header + "\n")
@@ -230,6 +238,9 @@ def perturbed_initial_condition(ini_pos_vel_att):
     return ini_pos_vel_att
 
 def run_and_save_results(args, motion_def, verbose=True):
+    start = time.time()
+    print "Starting simulation"
+    print "\tTime:", start
     resultsdir = args.outdir
     stagingdir = os.path.join(resultsdir, "staging")
     # Before running, warn if the resultsdir holds existing results.
@@ -286,7 +297,10 @@ def run_and_save_results(args, motion_def, verbose=True):
             sys.stdout = stdout
         collate_sim_results(stagingdir, os.path.join(resultsdir, "dr_{}.csv".format(i)))
         if verbose:
-            sys.stdout.write('.')
+            perc = float(i+1)/args.N*100
+            dur = time.time()-start
+            remain = dur/perc*100 - dur
+            sys.stdout.write('%.2f%% [%.2fs done, %.2fs remain]\n' % (perc, dur, remain))
             sys.stdout.flush()
     if verbose:
         print "Done"
