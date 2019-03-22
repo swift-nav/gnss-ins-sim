@@ -23,7 +23,7 @@ class FreeIntegrationWithVel(object):
     '''
     Integrate gyro to get attitude, double integrate linear acceleration to get position.
     '''
-    def __init__(self, ini_pos_vel_att, earth_rot=True, meas_vel_stddev=None):
+    def __init__(self, ini_pos_vel_att, earth_rot=True, meas_vel_stddev=None, nonholonomic=False):
         '''
         Args:
             ini_pos_vel_att: 9x1 initial position, velocity and attitude.
@@ -37,6 +37,7 @@ class FreeIntegrationWithVel(object):
         self.output = ['att_euler', 'pos', 'vel']
         self.earth_rot = earth_rot
         self.meas_vel_stddev = meas_vel_stddev 
+        self.nonholonomic = nonholonomic
         self.batch = True
         self.results = None
         # algorithm vars
@@ -143,12 +144,23 @@ class FreeIntegrationWithVel(object):
                 w_nb_b = gyro[i-1, :] - c_bn.dot(w_en_n + w_ie_n)
                 self.att[i, :] = attitude.euler_update_zyx(self.att[i-1, :], w_nb_b, self.dt)
                 #### propagate velocity
-                # vel_dot_b = accel[i-1, :] + c_bn.T.dot(g_n) -\
-                #             attitude.cross3(c_bn.dot(w_ie_n)+gyro[i-1,:], self.vel_b[i-1,:])
-                # self.vel_b[i,:] = self.vel_b[i-1,:] + vel_dot_b*self.dt
                 vel_dot_n = c_bn.T.dot(accel[i-1, :]) + g_n -\
                             attitude.cross3(2*w_ie_n + w_en_n, self.vel[i-1, :])
-                self.vel[i, :] = self.vel[i-1, :] + vel_dot_n * self.dt
+
+                #### NOTE: SWIFT MODIFICATION
+                if self.nonholonomic:
+                    ## propagate the initial body-frame velocity in body-frame
+                    vel_dot_b = c_bn.dot(vel_dot_n)
+                    self.vel_b[i, :] = self.vel_b[i-1, :] + vel_dot_b * self.dt 
+                    
+                    c_bn = attitude.euler2dcm(self.att[i, :])
+                    self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])   # velocity in navigation frame
+                else:
+                    ## propagate the initial body-frame velocity in world-frame
+                    self.vel[i, :] = self.vel[i-1, :] + vel_dot_n * self.dt
+                    
+                    c_bn = attitude.euler2dcm(self.att[i, :])
+                    self.vel_b[i, :] = c_bn.dot(self.vel[i, :])
 
                 #### NOTE: SWIFT MODIFICATION
                 if self.meas_vel_stddev is not None:
@@ -159,13 +171,15 @@ class FreeIntegrationWithVel(object):
                     # Get the true body-frame velocity vector.
                     ref_vel_b = ref_c_bn.dot(ref_vel_n[i-1,:])
                     # Assume X points forward, apply non-holonomic constraints.
+                    hat_vel_b = ref_vel_b
                     hat_vel_b[1] = 0.
                     hat_vel_b[2] = 0.
                     # Add noise.
-                    hat_vel_b[0] += np.linalg.normal(scale=self.meas_vel_stddev)
+                    hat_vel_b[0] += np.random.normal(scale=self.meas_vel_stddev)
                     # Rotate back into nav frame.
                     hat_vel_n = hat_c_bn.T.dot(hat_vel_b)
                     self.vel[i-1, :] = hat_vel_n
+                    
                 #### propagate position
                 lat_dot = self.vel[i-1, 0] / rm_effective
                 lon_dot = self.vel[i-1, 1] / rn_effective / cl
@@ -175,7 +189,7 @@ class FreeIntegrationWithVel(object):
                 self.pos[i, 2] = self.pos[i-1, 2] + alt_dot * self.dt
                 #### output
                 c_bn = attitude.euler2dcm(self.att[i, :])
-                self.vel_b[i, :] = c_bn.dot(self.vel[i, :])
+                    
         # results
         self.results = [self.att, self.pos, self.vel_b]
 

@@ -12,7 +12,7 @@ python ./generate_dr_trajectories.py --outdir=./results --N=100 --dur=10 --speed
 
 Run with wheel odometry, with road vibrations:
 ```bash
-python ./generate_dr_trajectories.py --outdir=./results --N=100 --dur=10 --speed=55 --imu=bmi160 --vibrations=smooth --odom-sigma=0.01
+python ./generate_dr_trajectories.py --outdir=./results --N=100 --dur=10 --speed=55 --imu=bmi160 --vibrations=smooth --odometry=perfect
 ```
 
 Analyze resulting trajectories:

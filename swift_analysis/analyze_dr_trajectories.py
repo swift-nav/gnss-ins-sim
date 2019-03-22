@@ -77,6 +77,9 @@ plt.title("Error Scatter")
 plt.xlabel("Horizontal Cross-Track Error (m)")
 plt.ylabel("Horizontal Along-Track Error (m)")
 plt.gca().set_aspect('equal', 'datalim')
+ulim = np.max([np.max(np.abs(ctrack_errors)), np.max(np.abs(atrack_errors))])*1.2
+plt.xlim(-ulim, ulim)
+plt.ylim(-ulim, ulim)
 
 resultsname = resultsdir.strip("/")
 

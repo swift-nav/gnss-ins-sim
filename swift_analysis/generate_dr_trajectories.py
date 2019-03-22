@@ -42,44 +42,60 @@ VIBRATION_MODELS = {
 
 'none': None,
 
-# Vibrations experienced during 55mph highway 101 driving
-#DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random'
+# Vibrations experienced during 55mph highway 101 driving.
+# with a scale factor to validate the simulation results.
+#DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random' # No scale factor
 'smooth': '[0.0215 0.0215 0.075]g-random',
 
+# Vibrations halfway between bad bayfarm and highway 101
+'bumpy': '[0.02785 0.02785 0.0876]g-random',
+
 # Vibrations experienced during 33mph bayfarm driving
-#ROUGH_VIBRATIONS = '[0.0430 0.0430 0.1143]g-random'
-'bumpy': '[0.0342 0.0342 0.1002]g-random'
+#ROUGH_VIBRATIONS = '[0.0430 0.0430 0.1143]g-random' # No scale factor
+'realbumpy': '[0.0342 0.0342 0.1002]g-random'
 
 }
 
-ODOMETRY_MODELS = {
+DYNAMICS_MODELS = {
 
 'none': None,
 
-'perfect': 0.001
+'nhc': 'nhc',
+
+'perfectwheelodom': 0.001
 
 }
 
-'''
-    'gyro_b': gyro bias, deg/hr
-    'gyro_arw': gyro angle random walk, deg/rt-hr
-    'gyro_b_stability': gyro bias instability, deg/hr
-    'gyro_b_corr': gyro bias isntability correlation time, sec
-    'accel_b': accel bias, m/s2
-    'accel_vrw' : accel velocity random walk, m/s/rt-hr
-    'accel_b_stability': accel bias instability, m/s2
-    'accel_b_corr': accel bias isntability correlation time, sec
-    'mag_si': soft iron, default is a 3x3 identity matrix.
-    'mag_hi': hard iron, default is 3x1 zero vector.
-    'mag_std': mag noise std.
+TRAJECTORIES = [
 
-'''
+# Constant velocity in a straight line
+'CVSL',
+
+# Constant velocity in a 90 degree over 246 meters (90 degree turn at 55mph, ~0.4g turn)
+# deg/sec = vel * 90/245
+'CVArc'
+
+]
 
 # IMU noise parameters
 IMU_MODELS = {
 
-# TODO(niels)
-'bmw':      {'gyro_b':            np.array([0., 0., 0.]),
+# '''
+#     'gyro_b': gyro bias, deg/hr
+#     'gyro_arw': gyro angle random walk, deg/rt-hr
+#     'gyro_b_stability': gyro bias instability, deg/hr
+#     'gyro_b_corr': gyro bias isntability correlation time, sec
+#     'accel_b': accel bias, m/s2
+#     'accel_vrw' : accel velocity random walk, m/s/rt-hr
+#     'accel_b_stability': accel bias instability, m/s2
+#     'accel_b_corr': accel bias isntability correlation time, sec
+#     'mag_si': soft iron, default is a 3x3 identity matrix.
+#     'mag_hi': hard iron, default is 3x1 zero vector.
+#     'mag_std': mag noise std.
+
+# '''
+
+'bmw_typ':  {'gyro_b':            np.array([0., 0., 0.]),
              'gyro_arw':          np.array([1., 1., 1.]) * 0.8485,
              'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
              'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 * H2S,
@@ -88,21 +104,21 @@ IMU_MODELS = {
              'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
              'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
+'bmw_max':  {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 2.1909,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 7.9992,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0833 * H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.6572351335,
+             'accel_b_stability': np.array([1., 1., 1.]) * 44.7900 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0275 * H2S},
+
 'had300':   {'gyro_b':            np.array([0., 0., 0.]),
              'gyro_arw':          np.array([1., 1., 1.]) * 0.3900,
              'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
              'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 * H2S,
              'accel_b':           np.array([0., 0., 0.]),
              'accel_vrw':         np.array([1., 1., 1.]) * 0.30596748,
-             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
-             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
-
-'asm330':   {'gyro_b':            np.array([0., 0., 0.]),
-             'gyro_arw':          np.array([1., 1., 1.]) * 0.2269,
-             'gyro_b_stability':  np.array([1., 1., 1.]) * 1.6814,
-             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0833 * H2S,
-             'accel_b':           np.array([0., 0., 0.]),
-             'accel_vrw':         np.array([1., 1., 1.]) * 0.1176798,
              'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
              'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
@@ -115,14 +131,22 @@ IMU_MODELS = {
              'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
              'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
-'gyroonly': {'gyro_b':            np.array([0., 0., 0.]),
+'gyroonly':  {'gyro_b':            np.array([0., 0., 0.]),
              'gyro_arw':          np.array([1., 1., 1.]) * 0.3160,
              'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
              'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 *H2S,
              'accel_b':           np.array([0., 0., 0.]),
              'accel_vrw':         np.array([1., 1., 1.]) * 0.0,
-             'accel_b_stability': np.array([1., 1., 1.]) * 0.0 * UG,
-             'accel_b_corr':      np.array([1., 1., 1.]) * 10000.0 * H2S},
+             'accel_b_stability': np.array([1., 1., 1.]) * 0.0},
+
+'asm330':   {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.2269,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 1.6814,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0833 * H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.1176798,
+             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
@@ -149,7 +173,7 @@ IMU_MODELS = {
 D2R = np.pi / 180.0
 MPH2MS = 0.44704
 
-def make_motion_def(args):
+def make_motion_def(args,traj):
     init_header = ",".join(["ini lat (deg)",
                             "ini lon (deg)",
                             "ini alt (m)",
@@ -171,7 +195,14 @@ def make_motion_def(args):
 
     speed_ms = args.speed * MPH2MS
     init_values = [32., 120., 0., speed_ms, 0., 0., 0., 0., 0.]
-    traj_values = [1, 0., 0., 0., 0., 0., 0., args.dur, 0]
+    if traj == 'CVSL':
+        traj_values = [1, 0., 0., 0., 0., 0., 0., args.dur, 0]
+    if traj == 'CVArc':
+        # Constant velocity in a 90 degree over 246 meters (90 degree turn at 55mph, ~0.4g turn)
+        yaw_rate = speed_ms * 90./245.
+        print "Creating Arc Trajectory"
+        print "\tYaw rate: %.4f deg/sec over %.2fs at %.2fm/s" % (yaw_rate, args.dur, speed_ms)
+        traj_values = [1, yaw_rate, 0., 0., 0., 0., 0., args.dur, 0]
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
         f.write(init_header + "\n")
         f.write(",".join([str(v) for v in init_values]) + "\n")
@@ -219,17 +250,26 @@ def run_and_save_results(args, motion_def, verbose=True):
         if verbose:
             print "\tUsing vibration model: none"  
     odom_sigma = None
-    if args.odometry:
-        odom_sigma=ODOMETRY_MODELS[args.odometry]
+    nhc = False
+    if args.dynamics:
+        if DYNAMICS_MODELS[args.dynamics] == 'nhc':
+            nhc = True
+            if verbose:
+                print "\tUsing Non-Holonomic model: propagate velocity in body frame"
+        if type(DYNAMICS_MODELS[args.dynamics]) is float:
+            odom_sigma=DYNAMICS_MODELS[args.dynamics]
+            if verbose:
+                print "\tUsing odometry sigma: %s" % odom_sigma
+    else:
         if verbose:
-            print "\tUsing odometry sigma: %s" % odom_sigma
+            print "\tUsing standard point-mass unconstrained model: propagate velocity in world frame"  
     for i in range(args.N):
         if args.enable_init_error:
             init_cond = perturbed_initial_condition(ini_pos_vel_att)  
         else:
             init_cond = ini_pos_vel_att
 
-        algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=odom_sigma)
+        algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=odom_sigma, nonholonomic=nhc)
         sim = ins_sim.Sim([args.fs, 0.0, 0.0],
                            motion_def,
                            ref_frame=0,
@@ -280,13 +320,17 @@ if __name__ == "__main__":
                         help='IMU sample rate.')
     parser.add_argument('--vibrations', choices=VIBRATION_MODELS.keys(), required=False,
                         help='Simulated vibration parameters')
-    parser.add_argument('--odometry', choices=ODOMETRY_MODELS.keys(), required=False,
-                        help='Simulated odometry quality')
+    parser.add_argument('--dynamics', choices=DYNAMICS_MODELS.keys(), required=False,
+                        help='Simulated dynamics and wheel odometry model')
+    parser.add_argument('--trajectory', choices=TRAJECTORIES, required=False,
+                        help='Which trajectory to use', default='CVSL')
     parser.add_argument('--enable-init-error', action='store_true', default=False,
                         help='Enable small errors in the initial state estimate.')
+
+
     args = parser.parse_args()
     # Generate and run motion defs.
-    motion_def = make_motion_def(args)
+    motion_def = make_motion_def(args,args.trajectory)
     run_and_save_results(args, motion_def)
     os.remove(motion_def)
 
