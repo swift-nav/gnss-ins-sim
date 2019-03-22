@@ -540,8 +540,8 @@ def bias_drift(corr_time, drift, n, fs):
     for i in range(0, 3):
         if not math.isinf(corr_time[i]):
             # First-order Gauss-Markov
-            a = 1 - 1/fs/corr_time[i]
-            b = 1/fs*drift[i]
+            a = 1. - 1./fs/corr_time[i]
+            b = 1./fs*drift[i]
             #sensor_bias_drift[0, :] = np.random.randn(3) * drift
             drift_noise = np.random.randn(n, 3)
             for j in range(1, n):
