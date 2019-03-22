@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-N=1000
+N=100
 DUR=10
 CORES=`getconf _NPROCESSORS_ONLN`
 
@@ -15,11 +15,11 @@ mkdir -p $ROOTDIR
 i=0
 for TRAJ in 'CVSL'
 do
-	for ODOM in 'none' 'nhc' 'perfectwheelodom'
+	for ODOM in 'perfectwheelodom' 'none' # 'nhc'
 	do
-		for VIBRATION in 'smooth' 'bumpy'
+		for VIBRATION in 'smooth' # 'bumpy'
 		do
-			for IMU in 'bmi160' 'had300' 'bmw_typ' 'bmw_max'  
+			for IMU in 'bmi160' # 'had300' 'bmw_typ' 'bmw_max'  
 			do
 				for SPEED in 55 112
 				do
@@ -40,3 +40,4 @@ do
 		done
 	done
 done
+wait

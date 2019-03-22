@@ -63,7 +63,7 @@ DYNAMICS_MODELS = {
 
 'nhc': 'nhc',
 
-'perfectwheelodom': 0.001
+'perfectwheelodom': 0.04
 
 }
 

@@ -1,6 +1,27 @@
-#!/bin/bash -x
+#!/bin/bash
 
-for res in results*/;
-do
-	python ./analyze_dr_trajectories.py $res
-done
+CORES=`getconf _NPROCESSORS_ONLN`
+
+if [ "$1" != "" ]; then
+
+	i=0
+	for res in $1/results*/;
+	do
+		i=$((i+1))
+		b=$((i%CORES))
+
+		python ./analyze_dr_trajectories.py --plotlim=2.0 --writecsv=results.csv $res &
+		sleep 1
+		if [ $b -eq 0 ]
+		then
+			echo "Waiting for batch of ${CORES} jobs to complete..."
+			wait
+		fi
+	done
+	wait
+
+else
+    echo "Usage:"
+    echo "  ./parallelana <results-root-dir>"
+fi
+

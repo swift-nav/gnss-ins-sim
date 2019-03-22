@@ -189,6 +189,7 @@ class FreeIntegrationWithVel(object):
                 self.pos[i, 2] = self.pos[i-1, 2] + alt_dot * self.dt
                 #### output
                 c_bn = attitude.euler2dcm(self.att[i, :])
+                self.vel_b[i, :] = c_bn.dot(self.vel[i, :])
                     
         # results
         self.results = [self.att, self.pos, self.vel_b]
