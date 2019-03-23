@@ -15,11 +15,11 @@ mkdir -p $ROOTDIR
 i=0
 for TRAJ in 'CVSL'
 do
-	for ODOM in 'perfectwheelodom' 'none' # 'nhc'
+	for ODOM in 'wheelodom' 'pointmass' # 'nhc'
 	do
-		for VIBRATION in 'smooth' # 'bumpy'
+		for VIBRATION in 'none' 'smooth' 'bumpy'
 		do
-			for IMU in 'bmi160' # 'had300' 'bmw_typ' 'bmw_max'  
+			for IMU in 'bmi160' 'had300' 'bmw_typ' 'bmw_max'  
 			do
 				for SPEED in 55 112
 				do

@@ -59,11 +59,13 @@ VIBRATION_MODELS = {
 
 DYNAMICS_MODELS = {
 
-'none': None,
+'pointmass': None,
 
 'nhc': 'nhc',
 
-'perfectwheelodom': 0.04
+'perfectwheelodom' : 0.0001,
+
+'wheelodom': 0.1,
 
 }
 

@@ -55,6 +55,8 @@ def analyze(resultsdir, writecsv=None, plotlim=0.0):
         ref_alt = df[COL_REF_ALT].values
 
         times.append(t)
+        ### HACK HACK HACK
+        # This only works when moving in a straight line
         dut_y = EARTHRAD * D2R * dut_lat 
         dut_x = EARTHRAD * D2R * dut_lon * np.cos(D2R * 32.)
         ref_y = EARTHRAD * D2R * ref_lat
