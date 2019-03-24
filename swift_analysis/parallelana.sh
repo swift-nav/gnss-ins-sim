@@ -10,7 +10,7 @@ if [ "$1" != "" ]; then
 		i=$((i+1))
 		b=$((i%CORES))
 
-		python ./analyze_dr_trajectories.py --plotlim=2.0 --writecsv=results.csv $res &
+		python ./analyze_dr_trajectories.py --plotlim=2.0 --writecsv=$1.csv $res &
 		sleep 1
 		if [ $b -eq 0 ]
 		then
@@ -19,6 +19,7 @@ if [ "$1" != "" ]; then
 		fi
 	done
 	wait
+	cp resultsviewer.html $1/resultsviewer.html
 
 else
     echo "Usage:"

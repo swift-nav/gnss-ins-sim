@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Results</title>
+</head>
+<script type="text/javascript">
+
+// Order Matters
+OPTIONS = {
+	'IMU':['bmi160','had300','bmw_typ','bmw_max'],
+	'VEL':[55,112],
+	'VIBRATION':['none','smooth','bumpy','realbumpy'],
+	'ODOM':['pointmass','wheelodom'],
+	'TRAJ':['CVSL'],
+}
+
+VIBRATION = {
+	'none': 'None',
+	'smooth': '[0.0215 0.0215 0.075]g-random',
+	'bumpy': '[0.02785 0.02785 0.0876]g-random',
+	'realbumpy': '[0.0342 0.0342 0.1002]g-random'
+}
+
+IMU_UNITS = {
+     'gyro_b': 'gyro bias, deg/hr',
+     'gyro_arw': 'gyro angle random walk, deg/rt-hr',
+     'gyro_b_stability': 'gyro bias instability, deg/hr',
+     'gyro_b_corr': 'gyro bias isntability correlation time, sec',
+     'accel_b': 'accel bias, m/s2',
+     'accel_vrw' : 'accel velocity random walk, m/s/rt-hr',
+     'accel_b_stability': 'accel bias instability, m/s2',
+     'accel_b_corr': 'accel bias instability correlation time, sec'
+}
+
+IMU = {
+	'bmw_typ':  {'gyro_b':        	  0,    
+	             'gyro_arw':          0.8485,
+	             'gyro_b_stability':  4.3730,
+	             'gyro_b_corr':       0.0563,
+	             'accel_b':           0,
+	             'accel_vrw':         0.3393392888,
+	             'accel_b_stability': 33.9700,
+	             'accel_b_corr':      0.0134},
+
+	'bmw_max':  {'gyro_b':            0,
+	             'gyro_arw':          2.1909,
+	             'gyro_b_stability':  7.9992,
+	             'gyro_b_corr':       0.0833,
+	             'accel_b':           0,
+	             'accel_vrw':         0.6572351335,
+	             'accel_b_stability': 44.7900,
+	             'accel_b_corr':      0.0275},
+
+	'had300':   {'gyro_b':           0,
+	             'gyro_arw':         0.3900,
+	             'gyro_b_stability': 4.3730,
+	             'gyro_b_corr':      0.0563,
+	             'accel_b':          0,
+	             'accel_vrw':        0.30596748,
+	             'accel_b_stability':33.9700,
+	             'accel_b_corr':     0.0134},
+
+	'bmi160':   {'gyro_b':            0,
+	             'gyro_arw':          0.3160,
+	             'gyro_b_stability':  4.3730,
+	             'gyro_b_corr':       0.0563,
+	             'accel_b':           0,
+	             'accel_vrw':         0.07322625555,
+	             'accel_b_stability': 33.9700,
+	             'accel_b_corr':      0.0134},
+}
+
+var dict2table = function(dict, units) {
+	var tablestr = "<table>"
+	Object.entries(dict).forEach(entry => {
+		var entry_name = entry[0]
+		var entry_value = entry[1]
+		var entry_unit = units[entry_name]
+		tablestr += "<tr><td>" + entry_name + "</td><td>" + entry_value + "</td><td>" + entry_unit + "</td></tr>"
+	})
+	tablestr += "</table>"
+	return tablestr
+}
+
+var formchange = function() {
+	var selected = []
+	Object.entries(OPTIONS).forEach(option => {
+		var option_name = option[0]
+		var optionEl = document.getElementById(option_name)
+		selected.push(optionEl.options[optionEl.selectedIndex].value)
+	})
+	trajname = "results-" + selected.join("-") + "-analytics.png";
+	console.log(trajname)
+	document.getElementById("res_trajectory").src=trajname
+
+	vibration = document.getElementById('VIBRATION')
+	document.getElementById("res_vibration").innerHTML = VIBRATION[vibration.options[vibration.selectedIndex].value]
+
+	imu = document.getElementById('IMU')
+	console.log(IMU[imu.options[imu.selectedIndex].value])
+	document.getElementById('res_imu').innerHTML = dict2table(IMU[imu.options[imu.selectedIndex].value], IMU_UNITS)
+
+}
+
+window.onload = function() {
+	optionsDiv = document.getElementById('options');
+	Object.entries(OPTIONS).forEach(option => {
+		var option_name = option[0]
+		var option_entries = option[1]
+		var optionHTML = option_name + "<select id=\"" + option_name + "\" onchange=\"formchange();\">"
+		for (var i in option_entries) {
+			option = option_entries[i]
+			optionHTML += "<option value=\"" + option + "\">" + option + "</option>"
+		}
+		optionHTML += "</select></br>"
+		optionsDiv.innerHTML += optionHTML
+	});
+	formchange();
+}
+
+</script>
+<body>
+
+<h1>Simulation Results</h1>
+<div id="options">
+</div>
+<div id="results">
+	<h4>Error Distribution</h4>
+	<img id="res_trajectory"/>
+	<h4>IMU Specifications</h4>
+	<div id="res_imu"></div>	 
+	<h4>Road-Induced IMU Vibration</h4>
+	<div id="res_vibration"></div>
+</div>
+
+</body>
+</html>

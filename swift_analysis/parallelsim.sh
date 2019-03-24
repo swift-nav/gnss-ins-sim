@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-N=100
+N=1000
 DUR=10
 CORES=`getconf _NPROCESSORS_ONLN`
 
@@ -17,7 +17,7 @@ for TRAJ in 'CVSL'
 do
 	for ODOM in 'wheelodom' 'pointmass' # 'nhc'
 	do
-		for VIBRATION in 'none' 'smooth' 'bumpy'
+		for VIBRATION in 'realbumpy' #'none' 'smooth' 'bumpy' 
 		do
 			for IMU in 'bmi160' 'had300' 'bmw_typ' 'bmw_max'  
 			do
@@ -26,7 +26,7 @@ do
 					i=$((i+1))
 					b=$((i%CORES))
 					ipp=`printf "%05d" $i`
-					OUTDIR="$ROOTDIR/results-${ipp}-${IMU}-${SPEED}-${VIBRATION}-${ODOM}-${TRAJ}"
+					OUTDIR="$ROOTDIR/results-${IMU}-${SPEED}-${VIBRATION}-${ODOM}-${TRAJ}"
 					python ./generate_dr_trajectories.py --outdir=$OUTDIR --N=$N --dur=$DUR --speed=$SPEED --imu=$IMU --vibrations=$VIBRATION --dynamics=$ODOM --traj=$TRAJ >> $ROOTDIR/sim$ipp.log &
 					echo $! >> $ROOTDIR/sim$ipp.pid
 					sleep 1

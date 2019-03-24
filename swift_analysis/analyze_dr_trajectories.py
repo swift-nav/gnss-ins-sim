@@ -124,19 +124,18 @@ def analyze(resultsdir, writecsv=None, plotlim=0.0):
 
 
     resultsparams = resultsname.split("-")
-    if writecsv is not None and len(resultsparams) >= 6:
+    if writecsv is not None and len(resultsparams) >= 5:
         # This came from parallel sims, so we dump results into CSV file
         STATSFILE = writecsv
         write_header = False
         if not os.path.isfile(STATSFILE):
             write_header = True
 
-        ipp   = resultsparams[1]
-        imu   = resultsparams[2]
-        speed = resultsparams[3]
-        vibe  = resultsparams[4]
-        odom  = resultsparams[5]
-        traj  = resultsparams[6]
+        imu   = resultsparams[1]
+        speed = resultsparams[2]
+        vibe  = resultsparams[3]
+        odom  = resultsparams[4]
+        traj  = resultsparams[5]
 
         with open(STATSFILE, 'a+') as f:
             if write_header:
@@ -160,7 +159,7 @@ def analyze(resultsdir, writecsv=None, plotlim=0.0):
 
 
         plt.show(block=False)
-        print "Processed", ipp
+        print "Processed %s " % resultsname
     else:
         for ti in hori_errors_stats_at.keys():
             sys.stdout.write(str(ti))
